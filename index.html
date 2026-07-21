@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUIVRE · Suivi & Évaluation des formations — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --encre:#16283C;
+  --encre-70:#3D5166;
+  --fond:#F2F4F3;
+  --panel:#FFFFFF;
+  --teal:#0E7C86;
+  --teal-clair:#E3F0F1;
+  --bleu:#2F6FB2;
+  --ambre:#C77E1F;
+  --ambre-clair:#FBF1E1;
+  --rouge:#B4452F;
+  --ligne:#DCE2E5;
+  --ok:#3E7C4F;
+  --serif:'IBM Plex Serif',Georgia,serif;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--fond);color:var(--encre);font-size:15px;line-height:1.55}
+a{color:var(--teal)}
+
+/* ---------- Header ---------- */
+header{background:var(--encre);color:#fff;padding:26px 28px 0}
+.h-top{display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;max-width:1180px;margin:0 auto}
+.h-titre{font-family:var(--serif);font-weight:600;font-size:1.7rem;letter-spacing:.2px}
+.h-titre span{color:#8FC6CC}
+.badge-fictif{font-family:var(--mono);font-size:.72rem;background:var(--ambre);color:#fff;padding:4px 10px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+.h-sous{max-width:1180px;margin:6px auto 0;color:#B9C4CE;font-size:.9rem}
+
+/* Chaîne de résultats — élément signature */
+.chaine{max-width:1180px;margin:18px auto 0;display:flex;flex-wrap:wrap;align-items:center;gap:0;padding-bottom:18px}
+.chaine .maillon{font-family:var(--mono);font-size:.74rem;padding:5px 12px;border:1px solid #3D5166;border-radius:999px;color:#B9C4CE;white-space:nowrap}
+.chaine .maillon.actif{background:var(--teal);border-color:var(--teal);color:#fff}
+.chaine .fleche{color:#5A6E82;padding:0 8px;font-size:.8rem}
+
+/* ---------- Nav ---------- */
+nav{background:var(--encre);position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(22,40,60,.25)}
+.nav-int{max-width:1180px;margin:0 auto;display:flex;overflow-x:auto}
+.onglet{appearance:none;background:none;border:none;color:#B9C4CE;font-family:var(--sans);font-size:.92rem;font-weight:500;padding:14px 20px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.onglet:hover{color:#fff}
+.onglet:focus-visible{outline:2px solid #8FC6CC;outline-offset:-2px}
+.onglet[aria-selected="true"]{color:#fff;border-bottom-color:var(--teal)}
+
+/* ---------- Layout ---------- */
+main{max-width:1180px;margin:0 auto;padding:26px 28px 60px}
+.vue{display:none;animation:fade .25s ease}
+.vue.actif{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.vue{animation:none}}
+
+h2{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin-bottom:4px}
+.sous-titre{color:var(--encre-70);font-size:.9rem;margin-bottom:20px}
+
+/* Filtres */
+.filtres{display:flex;flex-wrap:wrap;gap:12px;background:var(--panel);border:1px solid var(--ligne);border-radius:8px;padding:14px 16px;margin-bottom:22px;align-items:end}
+.filtre label{display:block;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--encre-70);margin-bottom:4px}
+.filtre select{font-family:var(--sans);font-size:.9rem;padding:7px 10px;border:1px solid var(--ligne);border-radius:5px;background:#fff;color:var(--encre);min-width:160px}
+.filtre select:focus-visible{outline:2px solid var(--teal)}
+.btn-reinit{margin-left:auto;background:none;border:1px solid var(--ligne);border-radius:5px;padding:7px 14px;font-family:var(--sans);font-size:.85rem;color:var(--encre-70);cursor:pointer}
+.btn-reinit:hover{border-color:var(--teal);color:var(--teal)}
+
+/* Cartes */
+.grille-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--ligne);border-radius:8px;padding:16px 18px}
+.kpi .val{font-family:var(--mono);font-size:1.75rem;font-weight:500;line-height:1.15}
+.kpi .lib{font-size:.84rem;color:var(--encre-70);margin-top:2px}
+.kpi .delta{font-family:var(--mono);font-size:.75rem;margin-top:6px;display:inline-block;padding:2px 8px;border-radius:3px}
+.delta.pos{background:#E7F0E9;color:var(--ok)}
+.delta.attention{background:var(--ambre-clair);color:var(--ambre)}
+
+.grille-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grille-32{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px}
+@media(max-width:860px){.grille-2,.grille-32{grid-template-columns:1fr}}
+.carte{background:var(--panel);border:1px solid var(--ligne);border-radius:8px;padding:18px}
+.carte h3{font-size:.95rem;font-weight:600;margin-bottom:2px}
+.carte .note{font-size:.8rem;color:var(--encre-70);margin-bottom:12px}
+.canvas-boite{position:relative;height:260px}
+.canvas-boite.haut{height:300px}
+
+/* Kirkpatrick */
+.niveaux{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:22px}
+.niveau{background:var(--panel);border:1px solid var(--ligne);border-left:4px solid var(--teal);border-radius:8px;padding:14px 16px}
+.niveau .num{font-family:var(--mono);font-size:.68rem;color:var(--encre-70);text-transform:uppercase;letter-spacing:.6px}
+.niveau .titre-n{font-weight:600;font-size:.92rem;margin:2px 0 6px}
+.niveau .mesure{font-family:var(--mono);font-size:1.4rem}
+.niveau .src{font-size:.76rem;color:var(--encre-70);margin-top:4px}
+
+/* Tableaux */
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--encre-70);text-align:left;padding:8px 10px;border-bottom:2px solid var(--ligne)}
+td{padding:9px 10px;border-bottom:1px solid var(--ligne)}
+tr:hover td{background:#F7FAFA}
+td.mono{font-family:var(--mono);font-size:.84rem}
+.jauge{background:#EAEEF0;border-radius:99px;height:8px;min-width:70px;overflow:hidden}
+.jauge i{display:block;height:100%;background:var(--teal);border-radius:99px}
+.tag{font-family:var(--mono);font-size:.72rem;padding:2px 8px;border-radius:3px;background:var(--teal-clair);color:var(--teal)}
+.tag.suivi{background:var(--ambre-clair);color:var(--ambre)}
+tr.sel td{background:var(--teal-clair)}
+tbody tr{cursor:pointer}
+
+/* ---------- E-learning ---------- */
+.elearn-cadre{max-width:760px;margin:0 auto}
+.progress-barre{background:#EAEEF0;border-radius:99px;height:10px;margin:14px 0 24px;overflow:hidden}
+.progress-barre i{display:block;height:100%;background:var(--teal);width:0;transition:width .3s ease;border-radius:99px}
+.scenario{background:var(--teal-clair);border-left:4px solid var(--teal);border-radius:0 8px 8px 0;padding:14px 16px;font-size:.92rem;margin-bottom:18px}
+.question-titre{font-family:var(--serif);font-weight:600;font-size:1.05rem;margin-bottom:14px}
+.choix{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--ligne);border-radius:8px;padding:13px 15px;margin-bottom:10px;font-family:var(--sans);font-size:.92rem;color:var(--encre);cursor:pointer;transition:border-color .15s}
+.choix:hover{border-color:var(--teal)}
+.choix:focus-visible{outline:2px solid var(--teal)}
+.choix.bon{border-color:var(--ok);background:#E7F0E9}
+.choix.mauvais{border-color:var(--rouge);background:#F8E9E5}
+.choix[disabled]{cursor:default}
+.feedback{border-radius:8px;padding:13px 15px;font-size:.9rem;margin:12px 0 18px;display:none}
+.feedback.ok{display:block;background:#E7F0E9;border:1px solid #BAD5C1}
+.feedback.ko{display:block;background:#F8E9E5;border:1px solid #E4BDB2}
+.feedback b{display:block;margin-bottom:3px}
+.btn{background:var(--teal);color:#fff;border:none;border-radius:6px;padding:10px 22px;font-family:var(--sans);font-size:.92rem;font-weight:500;cursor:pointer}
+.btn:hover{background:#0A646C}
+.btn:focus-visible{outline:2px solid var(--encre)}
+.btn.secondaire{background:none;color:var(--teal);border:1px solid var(--teal)}
+.btn[disabled]{opacity:.45;cursor:default}
+.resultat-final{text-align:center;padding:30px 0}
+.resultat-final .score{font-family:var(--mono);font-size:3rem;color:var(--teal)}
+.tracab{margin-top:26px}
+.tracab h3{font-size:.95rem;margin-bottom:8px}
+.vide{color:var(--encre-70);font-size:.86rem;font-style:italic}
+
+/* À propos */
+.apropos{max-width:760px}
+.apropos p{margin-bottom:14px}
+.apropos .encart{background:var(--ambre-clair);border-left:4px solid var(--ambre);border-radius:0 8px 8px 0;padding:14px 16px;font-size:.9rem;margin:18px 0}
+.apropos ul{margin:0 0 14px 22px}
+.apropos li{margin-bottom:6px}
+
+footer{border-top:1px solid var(--ligne);margin-top:40px;padding:22px 28px;text-align:center;font-size:.82rem;color:var(--encre-70)}
+footer .mono{font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-top">
+    <div class="h-titre">SUIVRE<span> · Suivi & Évaluation des formations</span></div>
+    <span class="badge-fictif">Prototype — données 100 % fictives</span>
+  </div>
+  <div class="h-sous">Tableau de bord de pilotage des dispositifs de formation — gouvernance sécuritaire centrée sur les personnes</div>
+  <div class="chaine" aria-label="Chaîne de résultats">
+    <span class="maillon">Portefeuille Gouvernance</span><span class="fleche">→</span>
+    <span class="maillon">Effet 3 · Sécurité & Justice</span><span class="fleche">→</span>
+    <span class="maillon actif">Développement des compétences</span><span class="fleche">→</span>
+    <span class="maillon">Confiance des citoyens</span>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-int" role="tablist">
+    <button class="onglet" role="tab" aria-selected="true" data-vue="vue-ensemble">Vue d'ensemble</button>
+    <button class="onglet" role="tab" aria-selected="false" data-vue="vue-kirkpatrick">Suivi Kirkpatrick</button>
+    <button class="onglet" role="tab" aria-selected="false" data-vue="vue-formateurs">Formateurs</button>
+    <button class="onglet" role="tab" aria-selected="false" data-vue="vue-elearning">Démo e-learning</button>
+    <button class="onglet" role="tab" aria-selected="false" data-vue="vue-apropos">À propos</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ===================== VUE D'ENSEMBLE ===================== -->
+<section id="vue-ensemble" class="vue actif">
+  <h2>Vue d'ensemble du dispositif</h2>
+  <p class="sous-titre">Agrégats sur l'ensemble des sessions de formation — filtrables par module, région et cohorte.</p>
+
+  <div class="filtres">
+    <div class="filtre"><label for="f-module">Module</label><select id="f-module"></select></div>
+    <div class="filtre"><label for="f-region">Région</label><select id="f-region"></select></div>
+    <div class="filtre"><label for="f-cohorte">Cohorte</label><select id="f-cohorte"></select></div>
+    <button class="btn-reinit" id="btn-reinit">Réinitialiser les filtres</button>
+  </div>
+
+  <div class="grille-kpi" id="kpis"></div>
+
+  <div class="grille-32">
+    <div class="carte">
+      <h3>Agents formés par trimestre</h3>
+      <div class="note">Évolution du volume de formation sur les six dernières cohortes.</div>
+      <div class="canvas-boite"><canvas id="ch-trimestres"></canvas></div>
+    </div>
+    <div class="carte">
+      <h3>Répartition par module</h3>
+      <div class="note">Part des participants par thématique de formation.</div>
+      <div class="canvas-boite"><canvas id="ch-modules"></canvas></div>
+    </div>
+  </div>
+  <div class="carte">
+    <h3>Couverture régionale</h3>
+    <div class="note">Agents formés par région d'affectation — repère les zones sous-couvertes.</div>
+    <div class="canvas-boite"><canvas id="ch-regions"></canvas></div>
+  </div>
+</section>
+
+<!-- ===================== KIRKPATRICK ===================== -->
+<section id="vue-kirkpatrick" class="vue">
+  <h2>Suivi & évaluation — modèle Kirkpatrick</h2>
+  <p class="sous-titre">Mesurer les acquis réels et leur transfert dans les pratiques professionnelles — pas seulement la satisfaction déclarée.</p>
+
+  <div class="filtres">
+    <div class="filtre"><label for="k-module">Module</label><select id="k-module"></select></div>
+    <div class="filtre"><label for="k-region">Région</label><select id="k-region"></select></div>
+    <div class="filtre"><label for="k-cohorte">Cohorte</label><select id="k-cohorte"></select></div>
+    <button class="btn-reinit" id="btn-reinit-k">Réinitialiser les filtres</button>
+  </div>
+
+  <div class="niveaux" id="niveaux"></div>
+
+  <div class="grille-2">
+    <div class="carte">
+      <h3>Acquis d'apprentissage — pré-test vs post-test</h3>
+      <div class="note">Niveau 2 · Score moyen par module (sur 100).</div>
+      <div class="canvas-boite haut"><canvas id="ch-prepost"></canvas></div>
+    </div>
+    <div class="carte">
+      <h3>Transfert dans les pratiques à 3 mois</h3>
+      <div class="note">Niveau 3 · Part des agents appliquant les acquis, mesurée par observation et supervision (fictif).</div>
+      <div class="canvas-boite haut"><canvas id="ch-transfert"></canvas></div>
+    </div>
+  </div>
+  <div class="carte">
+    <h3>Satisfaction par cohorte</h3>
+    <div class="note">Niveau 1 · Score moyen de satisfaction des participants (sur 5), par cohorte.</div>
+    <div class="canvas-boite"><canvas id="ch-satisfaction"></canvas></div>
+  </div>
+</section>
+
+<!-- ===================== FORMATEURS ===================== -->
+<section id="vue-formateurs" class="vue">
+  <h2>Qualité pédagogique — équipe de formateurs</h2>
+  <p class="sous-titre">Grilles d'observation des sessions : sélectionner un formateur ou une formatrice pour afficher son profil de compétences.</p>
+
+  <div class="grille-32">
+    <div class="carte">
+      <h3>Équipe mobile de formation</h3>
+      <div class="note">Scores issus des observations de sessions (moyenne sur 5). Noms fictifs.</div>
+      <div style="overflow-x:auto">
+      <table id="tbl-formateurs">
+        <thead><tr><th>Formateur·rice</th><th>Sessions observées</th><th>Score global</th><th></th><th>Statut</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      </div>
+    </div>
+    <div class="carte">
+      <h3 id="radar-titre">Profil de compétences</h3>
+      <div class="note">Cinq critères de la grille d'observation pédagogique.</div>
+      <div class="canvas-boite haut"><canvas id="ch-radar"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== E-LEARNING ===================== -->
+<section id="vue-elearning" class="vue">
+  <div class="elearn-cadre">
+    <h2>Module e-learning — démonstration</h2>
+    <p class="sous-titre">Cas pratique interactif · Déontologie et accueil du citoyen · Feedback immédiat et traçabilité des acquis. Scénario entièrement fictif.</p>
+    <div class="progress-barre" aria-hidden="true"><i id="el-progress"></i></div>
+    <div id="el-conteneur"></div>
+    <div class="tracab">
+      <h3>Traçabilité des acquis</h3>
+      <div class="note">Journal des tentatives — illustre le suivi individuel de la progression qu'exigerait une plateforme complète.</div>
+      <div id="el-journal"><p class="vide">Aucune tentative enregistrée pour l'instant. Terminez le module pour alimenter le journal.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== À PROPOS ===================== -->
+<section id="vue-apropos" class="vue">
+  <div class="apropos">
+    <h2>À propos de ce prototype</h2>
+    <p class="sous-titre">Ce que cette démonstration cherche à illustrer — et ses limites assumées.</p>
+    <div class="encart"><strong>Toutes les données sont fictives.</strong> Aucune donnée réelle, aucune institution identifiable, aucun agent réel : chiffres, noms et scénarios ont été générés uniquement pour la démonstration.</div>
+    <p>Ce prototype illustre trois fonctions centrales d'un dispositif de développement des compétences dans le cadre d'une gouvernance sécuritaire centrée sur les personnes :</p>
+    <ul>
+      <li><strong>Le suivi-évaluation structuré</strong> — un système qui mesure les quatre niveaux du modèle Kirkpatrick : la réaction des participants, les acquis d'apprentissage (pré/post-test), le transfert dans les pratiques professionnelles, et les indicateurs d'impact.</li>
+      <li><strong>Le contrôle qualité pédagogique</strong> — le suivi des formateurs et formatrices par grilles d'observation, pour structurer l'accompagnement des équipes mobiles de formation.</li>
+      <li><strong>L'innovation pédagogique numérique</strong> — un module e-learning interactif avec feedback immédiat et traçabilité individuelle des acquis, favorisant l'apprentissage autonome.</li>
+    </ul>
+    <p>La conviction qui sous-tend l'outil : la valeur d'un dispositif de formation se mesure à ce qui change pour le citoyen au contact de l'agent formé — d'où la priorité donnée au transfert des acquis plutôt qu'aux seuls taux de satisfaction.</p>
+    <p>Réalisation : application statique autonome (HTML/CSS/JavaScript), sans serveur ni collecte de données, déployable sur n'importe quel hébergement.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Prototype développé par <strong>Meher Bejaoui</strong> · <span class="mono">Données 100 % fictives — usage de démonstration uniquement</span>
+</footer>
+
+<script>
+/* ============================================================
+   Données fictives — générées avec un PRNG déterministe
+   ============================================================ */
+const MODULES=[
+  {id:'pp', nom:'Police de proximité', couleur:'#0E7C86'},
+  {id:'dh', nom:'Droits humains & libertés', couleur:'#2F6FB2'},
+  {id:'deo',nom:'Déontologie policière', couleur:'#C77E1F'},
+  {id:'num',nom:'Services numériques au citoyen', couleur:'#5B8C5A'},
+  {id:'vbg',nom:'Accueil & prise en charge des VBG', couleur:'#8C5B7F'}
+];
+const REGIONS=['Nord','Nord-Ouest','Centre','Sud-Est','Sud-Ouest'];
+const COHORTES=['2025-T1','2025-T2','2025-T3','2025-T4','2026-T1','2026-T2'];
+const FORMATEURS=[
+  {nom:'S. Gharbi', sessions:14},{nom:'M. Ayari', sessions:11},{nom:'R. Belhadj', sessions:16},
+  {nom:'H. Mansouri', sessions:9},{nom:'A. Jlassi', sessions:12},{nom:'N. Chaabane', sessions:7},
+  {nom:'K. Dridi', sessions:13},{nom:'L. Saidane', sessions:10}
+];
+const CRITERES=['Maîtrise du contenu','Animation & interaction','Gestion du groupe','Usage des outils didactiques','Évaluation des acquis'];
+
+/* PRNG déterministe (mulberry32) pour des données stables entre visites */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=mulberry32(20260721);
+const entre=(min,max)=>min+rnd()*(max-min);
+
+/* Sessions : une par (module × région × cohorte), volumes et scores plausibles */
+const SESSIONS=[];
+MODULES.forEach((m,mi)=>{
+  REGIONS.forEach((r,ri)=>{
+    COHORTES.forEach((c,ci)=>{
+      const participants=Math.round(entre(14,34)+ci*1.5);
+      const pre=Math.round(entre(38,55));
+      const gain=Math.round(entre(18,32)+ci*0.8);           /* amélioration progressive */
+      const post=Math.min(96,pre+gain);
+      const satisfaction=+(entre(3.6,4.7)+ci*0.03).toFixed(2);
+      const transfert=Math.round(Math.min(92,entre(48,72)+ci*2));
+      SESSIONS.push({module:m.id,region:r,cohorte:c,participants,pre,post,satisfaction,transfert,
+        formateur:FORMATEURS[(mi*5+ri+ci)%FORMATEURS.length].nom});
+    });
+  });
+});
+
+/* Profils formateurs (radar) */
+FORMATEURS.forEach(f=>{
+  f.scores=CRITERES.map(()=>+(entre(3.2,4.8)).toFixed(1));
+  f.global=+(f.scores.reduce((a,b)=>a+b,0)/CRITERES.length).toFixed(1);
+});
+
+/* ============================================================
+   Stockage sûr (localStorage si dispo, sinon mémoire)
+   ============================================================ */
+const memoire={};
+const stock={
+  get(k){try{return window.localStorage.getItem(k)}catch(e){return memoire[k]??null}},
+  set(k,v){try{window.localStorage.setItem(k,v)}catch(e){memoire[k]=v}}
+};
+
+/* ============================================================
+   Navigation par onglets
+   ============================================================ */
+const onglets=document.querySelectorAll('.onglet');
+onglets.forEach(o=>o.addEventListener('click',()=>{
+  onglets.forEach(x=>x.setAttribute('aria-selected','false'));
+  o.setAttribute('aria-selected','true');
+  document.querySelectorAll('.vue').forEach(v=>v.classList.remove('actif'));
+  document.getElementById(o.dataset.vue).classList.add('actif');
+}));
+
+/* ============================================================
+   Filtres
+   ============================================================ */
+function peuplerSelect(sel,options,libTous){
+  sel.innerHTML='<option value="">'+libTous+'</option>'+options.map(o=>`<option value="${o.id??o}">${o.nom??o}</option>`).join('');
+}
+const fMod=document.getElementById('f-module'),fReg=document.getElementById('f-region'),fCoh=document.getElementById('f-cohorte');
+const kMod=document.getElementById('k-module'),kReg=document.getElementById('k-region'),kCoh=document.getElementById('k-cohorte');
+[[fMod,kMod],[fReg,kReg],[fCoh,kCoh]].forEach(()=>{});
+peuplerSelect(fMod,MODULES,'Tous les modules');peuplerSelect(kMod,MODULES,'Tous les modules');
+peuplerSelect(fReg,REGIONS,'Toutes les régions');peuplerSelect(kReg,REGIONS,'Toutes les régions');
+peuplerSelect(fCoh,COHORTES,'Toutes les cohortes');peuplerSelect(kCoh,COHORTES,'Toutes les cohortes');
+
+function filtrer(mod,reg,coh){
+  return SESSIONS.filter(s=>(!mod||s.module===mod)&&(!reg||s.region===reg)&&(!coh||s.cohorte===coh));
+}
+
+/* ============================================================
+   Graphiques — réglages communs
+   ============================================================ */
+Chart.defaults.font.family="'IBM Plex Sans',sans-serif";
+Chart.defaults.color='#3D5166';
+const graphes={};
+function dessiner(id,config){
+  if(graphes[id])graphes[id].destroy();
+  graphes[id]=new Chart(document.getElementById(id),config);
+}
+
+/* ============================================================
+   Vue d'ensemble
+   ============================================================ */
+function majEnsemble(){
+  const data=filtrer(fMod.value,fReg.value,fCoh.value);
+  const tot=data.reduce((a,s)=>a+s.participants,0);
+  const nbSessions=data.length;
+  const satMoy=(data.reduce((a,s)=>a+s.satisfaction,0)/nbSessions).toFixed(2);
+  const gainMoy=Math.round(data.reduce((a,s)=>a+(s.post-s.pre),0)/nbSessions);
+  const transfMoy=Math.round(data.reduce((a,s)=>a+s.transfert,0)/nbSessions);
+
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi"><div class="val">${tot.toLocaleString('fr-FR')}</div><div class="lib">Agents formés</div><span class="delta pos">↑ volume en progression</span></div>
+    <div class="kpi"><div class="val">${nbSessions}</div><div class="lib">Sessions de formation</div><span class="delta pos">5 régions couvertes</span></div>
+    <div class="kpi"><div class="val">+${gainMoy} pts</div><div class="lib">Gain moyen pré/post-test</div><span class="delta pos">acquis mesurés</span></div>
+    <div class="kpi"><div class="val">${transfMoy} %</div><div class="lib">Transfert dans les pratiques</div><span class="delta ${transfMoy<65?'attention':'pos'}">${transfMoy<65?'à renforcer':'objectif atteint'}</span></div>
+    <div class="kpi"><div class="val">${satMoy} / 5</div><div class="lib">Satisfaction moyenne</div><span class="delta pos">niveau 1 Kirkpatrick</span></div>`;
+
+  /* Ligne : participants par cohorte */
+  const parCohorte=COHORTES.map(c=>data.filter(s=>s.cohorte===c).reduce((a,s)=>a+s.participants,0));
+  dessiner('ch-trimestres',{type:'line',data:{labels:COHORTES,datasets:[{label:'Agents formés',data:parCohorte,borderColor:'#0E7C86',backgroundColor:'rgba(14,124,134,.12)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#0E7C86'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#EAEEF0'}},x:{grid:{display:false}}}}});
+
+  /* Doughnut : par module */
+  const parModule=MODULES.map(m=>data.filter(s=>s.module===m.id).reduce((a,s)=>a+s.participants,0));
+  dessiner('ch-modules',{type:'doughnut',data:{labels:MODULES.map(m=>m.nom),datasets:[{data:parModule,backgroundColor:MODULES.map(m=>m.couleur),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}}}});
+
+  /* Barres : par région */
+  const parRegion=REGIONS.map(r=>data.filter(s=>s.region===r).reduce((a,s)=>a+s.participants,0));
+  dessiner('ch-regions',{type:'bar',data:{labels:REGIONS,datasets:[{label:'Agents formés',data:parRegion,backgroundColor:'#2F6FB2',borderRadius:4,maxBarThickness:56}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#EAEEF0'}},x:{grid:{display:false}}}}});
+}
+[fMod,fReg,fCoh].forEach(s=>s.addEventListener('change',majEnsemble));
+document.getElementById('btn-reinit').addEventListener('click',()=>{fMod.value=fReg.value=fCoh.value='';majEnsemble()});
+
+/* ============================================================
+   Vue Kirkpatrick
+   ============================================================ */
+function majKirkpatrick(){
+  const data=filtrer(kMod.value,kReg.value,kCoh.value);
+  const n=data.length||1;
+  const sat=(data.reduce((a,s)=>a+s.satisfaction,0)/n).toFixed(2);
+  const pre=Math.round(data.reduce((a,s)=>a+s.pre,0)/n);
+  const post=Math.round(data.reduce((a,s)=>a+s.post,0)/n);
+  const transf=Math.round(data.reduce((a,s)=>a+s.transfert,0)/n);
+
+  document.getElementById('niveaux').innerHTML=`
+    <div class="niveau"><div class="num">Niveau 1</div><div class="titre-n">Réaction</div><div class="mesure">${sat} / 5</div><div class="src">Questionnaires de satisfaction en fin de session</div></div>
+    <div class="niveau"><div class="num">Niveau 2</div><div class="titre-n">Apprentissage</div><div class="mesure">${pre} → ${post}</div><div class="src">Score moyen pré-test → post-test (sur 100)</div></div>
+    <div class="niveau"><div class="num">Niveau 3</div><div class="titre-n">Comportement</div><div class="mesure">${transf} %</div><div class="src">Transfert observé à 3 mois (supervision, fictif)</div></div>
+    <div class="niveau"><div class="num">Niveau 4</div><div class="titre-n">Résultats</div><div class="mesure">↑ confiance</div><div class="src">Indicateur d'impact à relier aux enquêtes de perception citoyenne (illustratif)</div></div>`;
+
+  /* Pré/post par module */
+  const mods=kMod.value?MODULES.filter(m=>m.id===kMod.value):MODULES;
+  const pres=mods.map(m=>{const d=data.filter(s=>s.module===m.id);return d.length?Math.round(d.reduce((a,s)=>a+s.pre,0)/d.length):0});
+  const posts=mods.map(m=>{const d=data.filter(s=>s.module===m.id);return d.length?Math.round(d.reduce((a,s)=>a+s.post,0)/d.length):0});
+  dessiner('ch-prepost',{type:'bar',data:{labels:mods.map(m=>m.nom),datasets:[
+      {label:'Pré-test',data:pres,backgroundColor:'#B9C4CE',borderRadius:4,maxBarThickness:34},
+      {label:'Post-test',data:posts,backgroundColor:'#0E7C86',borderRadius:4,maxBarThickness:34}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},
+      scales:{y:{beginAtZero:true,max:100,grid:{color:'#EAEEF0'}},x:{grid:{display:false},ticks:{font:{size:10},maxRotation:30}}}}});
+
+  /* Transfert par module (barres horizontales) */
+  const transferts=mods.map(m=>{const d=data.filter(s=>s.module===m.id);return d.length?Math.round(d.reduce((a,s)=>a+s.transfert,0)/d.length):0});
+  dessiner('ch-transfert',{type:'bar',data:{labels:mods.map(m=>m.nom),datasets:[{label:'Transfert (%)',data:transferts,backgroundColor:mods.map(m=>m.couleur),borderRadius:4,maxBarThickness:30}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,max:100,grid:{color:'#EAEEF0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+  /* Satisfaction par cohorte */
+  const sats=COHORTES.map(c=>{const d=data.filter(s=>s.cohorte===c);return d.length?+(d.reduce((a,s)=>a+s.satisfaction,0)/d.length).toFixed(2):null});
+  dessiner('ch-satisfaction',{type:'line',data:{labels:COHORTES,datasets:[{label:'Satisfaction',data:sats,borderColor:'#C77E1F',backgroundColor:'rgba(199,126,31,.1)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#C77E1F'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3,max:5,grid:{color:'#EAEEF0'}},x:{grid:{display:false}}}}});
+}
+[kMod,kReg,kCoh].forEach(s=>s.addEventListener('change',majKirkpatrick));
+document.getElementById('btn-reinit-k').addEventListener('click',()=>{kMod.value=kReg.value=kCoh.value='';majKirkpatrick()});
+
+/* ============================================================
+   Vue Formateurs
+   ============================================================ */
+let formateurSel=FORMATEURS[2].nom; /* le plus expérimenté par défaut */
+function majFormateurs(){
+  const tbody=document.querySelector('#tbl-formateurs tbody');
+  tbody.innerHTML=FORMATEURS.map(f=>`
+    <tr data-nom="${f.nom}" class="${f.nom===formateurSel?'sel':''}">
+      <td>${f.nom}</td>
+      <td class="mono">${f.sessions}</td>
+      <td class="mono">${f.global.toFixed(1)} / 5</td>
+      <td><div class="jauge"><i style="width:${f.global/5*100}%"></i></div></td>
+      <td>${f.global>=4?'<span class="tag">confirmé·e</span>':'<span class="tag suivi">accompagnement</span>'}</td>
+    </tr>`).join('');
+  tbody.querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>{formateurSel=tr.dataset.nom;majFormateurs()}));
+
+  const f=FORMATEURS.find(x=>x.nom===formateurSel);
+  document.getElementById('radar-titre').textContent='Profil de compétences — '+f.nom;
+  dessiner('ch-radar',{type:'radar',data:{labels:CRITERES,datasets:[{label:f.nom,data:f.scores,borderColor:'#0E7C86',backgroundColor:'rgba(14,124,134,.15)',pointBackgroundColor:'#0E7C86'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:10}},pointLabels:{font:{size:10}},grid:{color:'#EAEEF0'}}}}});
+}
+
+/* ============================================================
+   E-learning — cas pratique
+   ============================================================ */
+const QUIZ={
+  scenario:"Vous êtes agent d'accueil dans un commissariat. Une citoyenne âgée se présente, visiblement inquiète, pour signaler la disparition de documents d'identité. Elle s'exprime avec difficulté et semble ne pas connaître les démarches à suivre.",
+  questions:[
+    {q:"Quelle est la première attitude professionnelle à adopter ?",
+     choix:["Lui demander de patienter et traiter d'abord les dossiers en attente",
+            "L'accueillir, se présenter, et l'inviter à s'asseoir pour recueillir sa demande calmement",
+            "L'orienter directement vers un autre service sans recueillir sa demande"],
+     bonne:1,
+     fb_ok:"L'accueil de qualité est le premier vecteur de confiance entre le citoyen et le service : se présenter et créer les conditions d'un échange serein fait partie des standards d'un service centré sur la personne.",
+     fb_ko:"Un service centré sur les personnes commence par un accueil digne : se présenter, rassurer, et recueillir la demande avant toute autre considération."},
+    {q:"La citoyenne ne comprend pas les termes administratifs que vous employez. Que faites-vous ?",
+     choix:["Reformuler en langage simple et vérifier sa compréhension à chaque étape",
+            "Répéter les mêmes termes plus lentement",
+            "Lui remettre un formulaire et la laisser se débrouiller"],
+     bonne:0,
+     fb_ok:"L'accès aux droits suppose une information compréhensible : reformuler et vérifier la compréhension est une obligation de service, pas une faveur.",
+     fb_ko:"L'information n'est utile que si elle est comprise. Reformuler en langage simple et vérifier la compréhension garantit l'accès effectif de la citoyenne à ses droits."},
+    {q:"Vous constatez que la démarche relève partiellement d'une autre administration. Quelle est la bonne pratique ?",
+     choix:["Lui dire que ce n'est pas de votre ressort",
+            "Traiter la partie qui vous revient, expliquer précisément la suite du parcours, et lui remettre les coordonnées exactes du service compétent",
+            "Prendre le dossier complet sans l'informer des délais"],
+     bonne:1,
+     fb_ok:"C'est la logique du parcours usager : chaque agent est un maillon d'une chaîne de service. Orienter précisément évite à la citoyenne des allers-retours inutiles.",
+     fb_ko:"Renvoyer un usager sans orientation précise rompt la chaîne de service. La bonne pratique : traiter ce qui vous revient et baliser précisément la suite du parcours."},
+    {q:"En fin d'échange, quel réflexe renforce la confiance de la citoyenne dans le service ?",
+     choix:["Clore l'échange rapidement pour recevoir la personne suivante",
+            "Lui indiquer un délai approximatif sans trace écrite",
+            "Récapituler ce qui a été fait, remettre un récépissé, et indiquer le délai et le point de contact pour le suivi"],
+     bonne:2,
+     fb_ok:"La traçabilité et la prévisibilité sont les fondements de la redevabilité : un récépissé et un délai annoncé transforment une promesse verbale en engagement vérifiable.",
+     fb_ko:"La confiance se construit sur des engagements vérifiables : récapitulatif, récépissé, délai annoncé et point de contact pour le suivi."}
+  ]
+};
+let elIndex=0, elScore=0;
+const elConteneur=document.getElementById('el-conteneur');
+const elProgress=document.getElementById('el-progress');
+
+function elDemarrer(){
+  elIndex=0;elScore=0;
+  elConteneur.innerHTML=`
+    <div class="scenario"><strong>Mise en situation.</strong> ${QUIZ.scenario}</div>
+    <p style="margin-bottom:16px">Quatre questions, feedback immédiat après chaque réponse. Objectif pédagogique : les standards d'un accueil centré sur la personne.</p>
+    <button class="btn" id="el-btn-go">Commencer le cas pratique</button>`;
+  elProgress.style.width='0%';
+  document.getElementById('el-btn-go').addEventListener('click',elQuestion);
+}
+function elQuestion(){
+  const q=QUIZ.questions[elIndex];
+  elProgress.style.width=(elIndex/QUIZ.questions.length*100)+'%';
+  elConteneur.innerHTML=`
+    <div class="question-titre">Question ${elIndex+1} / ${QUIZ.questions.length} — ${q.q}</div>
+    ${q.choix.map((c,i)=>`<button class="choix" data-i="${i}">${c}</button>`).join('')}
+    <div class="feedback" id="el-fb"></div>
+    <button class="btn" id="el-suivant" disabled>${elIndex<QUIZ.questions.length-1?'Question suivante':'Voir mon résultat'}</button>`;
+  elConteneur.querySelectorAll('.choix').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.i, fb=document.getElementById('el-fb');
+    elConteneur.querySelectorAll('.choix').forEach(x=>x.disabled=true);
+    if(i===q.bonne){b.classList.add('bon');elScore++;fb.className='feedback ok';fb.innerHTML='<b>Bonne réponse.</b> '+q.fb_ok;}
+    else{b.classList.add('mauvais');elConteneur.querySelector(`.choix[data-i="${q.bonne}"]`).classList.add('bon');fb.className='feedback ko';fb.innerHTML='<b>À revoir.</b> '+q.fb_ko;}
+    document.getElementById('el-suivant').disabled=false;
+  }));
+  document.getElementById('el-suivant').addEventListener('click',()=>{
+    elIndex++;
+    if(elIndex<QUIZ.questions.length)elQuestion();else elFin();
+  });
+}
+function elFin(){
+  elProgress.style.width='100%';
+  const pct=Math.round(elScore/QUIZ.questions.length*100);
+  const mention=pct>=75?'Acquis validés':pct>=50?'Acquis partiels — révision conseillée':'Module à refaire';
+  elConteneur.innerHTML=`
+    <div class="resultat-final">
+      <div class="score">${elScore} / ${QUIZ.questions.length}</div>
+      <p style="margin:8px 0 4px"><strong>${mention}</strong></p>
+      <p class="note" style="margin-bottom:20px">Sur une plateforme complète, ce résultat alimenterait automatiquement le dossier individuel de l'agent et le tableau de bord de suivi.</p>
+      <button class="btn" id="el-refaire">Refaire le module</button>
+    </div>`;
+  document.getElementById('el-refaire').addEventListener('click',elDemarrer);
+  /* Traçabilité */
+  const journal=JSON.parse(stock.get('el-journal')||'[]');
+  journal.unshift({date:new Date().toLocaleString('fr-FR'),score:elScore,total:QUIZ.questions.length,mention});
+  stock.set('el-journal',JSON.stringify(journal.slice(0,10)));
+  elJournal();
+}
+function elJournal(){
+  const journal=JSON.parse(stock.get('el-journal')||'[]');
+  const cible=document.getElementById('el-journal');
+  if(!journal.length){cible.innerHTML='<p class="vide">Aucune tentative enregistrée pour l\'instant. Terminez le module pour alimenter le journal.</p>';return;}
+  cible.innerHTML=`<table><thead><tr><th>Date</th><th>Score</th><th>Mention</th></tr></thead><tbody>
+    ${journal.map(j=>`<tr><td class="mono">${j.date}</td><td class="mono">${j.score} / ${j.total}</td><td>${j.mention}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ============================================================
+   Initialisation
+   ============================================================ */
+majEnsemble();
+majKirkpatrick();
+majFormateurs();
+elDemarrer();
+elJournal();
+</script>
+</body>
+</html>
